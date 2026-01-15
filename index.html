@@ -11,8 +11,6 @@
         body { font-family: 'Inter', sans-serif; }
         .phase-active { border-color: #3b82f6; background-color: #eff6ff; }
         .phase-done { border-color: #22c55e; background-color: #f0fdf4; color: #15803d; }
-        .pagination-btn { @apply px-3 py-1 border rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed; }
-        
         /* Animasi Indikator Live */
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
@@ -37,22 +35,18 @@
                 <div>
                     <h1 class="text-lg font-bold">E-Assessment UKK RPL</h1>
                     <div class="flex items-center text-xs text-blue-200">
-                        <span class="live-indicator"></span> Live Sync Active
+                        <span class="live-indicator"></span> SMKN 2 Bangkalan
                     </div>
                 </div>
             </div>
             
-            <!-- Admin Controls -->
             <div class="flex gap-3 items-center">
                 <div id="adminToolbar" class="hidden flex gap-2">
                     <button onclick="document.getElementById('modalAdd').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
                         <i class="fa-solid fa-user-plus"></i> <span class="hidden md:inline">Tambah</span>
                     </button>
-                    <!-- Status Sync -->
                     <span id="syncStatus" class="text-xs text-blue-200 italic flex items-center px-2"></span>
                 </div>
-                
-                <!-- Login Toggle -->
                 <button onclick="toggleRole()" id="authBtn" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition border border-slate-600">
                     <i class="fa-solid fa-lock"></i> Login Guru
                 </button>
@@ -63,7 +57,6 @@
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
         
-        <!-- Status Bar untuk Mode -->
         <div id="modeIndicator" class="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded text-sm flex justify-between items-center">
             <span><i class="fa-solid fa-eye mr-2"></i> Mode Siswa (Hanya Lihat)</span>
         </div>
@@ -79,7 +72,7 @@
                 <h3 class="text-2xl font-bold" id="inProgress">0</h3>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-                <p class="text-slate-500 text-xs uppercase font-bold">Selesai (Lulus)</p>
+                <p class="text-slate-500 text-xs uppercase font-bold">Lulus (Selesai)</p>
                 <h3 class="text-2xl font-bold" id="completed">0</h3>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
@@ -88,7 +81,7 @@
             </div>
         </div>
 
-        <!-- Search & Filter Bar -->
+        <!-- Search Bar -->
         <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="relative w-full md:w-1/2">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
@@ -100,25 +93,16 @@
             </div>
         </div>
 
-        <!-- Student List -->
-        <div id="studentList" class="grid grid-cols-1 gap-6 mb-6">
-            <!-- Cards will be injected here via JS -->
-        </div>
+        <div id="studentList" class="grid grid-cols-1 gap-6 mb-6"></div>
 
-        <!-- Pagination Controls -->
         <div id="paginationControls" class="flex justify-center items-center gap-2 mb-8 hidden">
-            <button onclick="changePage(-1)" id="btnPrev" class="pagination-btn bg-white">
-                <i class="fa-solid fa-chevron-left"></i> Prev
-            </button>
-            <span id="pageIndicator" class="text-sm font-semibold text-slate-600 px-2">Page 1 of 1</span>
-            <button onclick="changePage(1)" id="btnNext" class="pagination-btn bg-white">
-                Next <i class="fa-solid fa-chevron-right"></i>
-            </button>
+            <button onclick="changePage(-1)" id="btnPrev" class="px-3 py-1 border rounded hover:bg-slate-100 disabled:opacity-50">Prev</button>
+            <span id="pageIndicator" class="text-sm font-semibold text-slate-600 px-2">Page 1</span>
+            <button onclick="changePage(1)" id="btnNext" class="px-3 py-1 border rounded hover:bg-slate-100 disabled:opacity-50">Next</button>
         </div>
-
     </main>
 
-    <!-- Modal Tambah Siswa -->
+    <!-- Modal Tambah -->
     <div id="modalAdd" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
             <h2 class="text-xl font-bold mb-4 text-slate-800">Daftarkan Peserta UKK</h2>
@@ -140,34 +124,25 @@
     </div>
 
     <script>
-        // --- DATA STRUCTURE & STATE ---
+        // --- KONFIGURASI BARU ---
         const WEIGHTS = {
-            planning: 0.10, // 10%
-            process: 0.20,  // 20%
-            product: 0.40,  // 40%
-            present: 0.20,  // 20%
-            time: 0.10      // 10%
+            persiapan: 0.10,   // 10%
+            perencanaan: 0.15, // 15%
+            hasil: 0.40,       // 40% (Produk paling besar)
+            presentasi: 0.25,  // 25%
+            waktu: 0.10        // 10%
         };
 
-        // App State
-        let currentUserRole = 'student'; // 'student' or 'teacher'
+        const TEACHER_PASS_HASH = "-909641160"; // Hash 'santuy'
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBgKCtH5Ntngiig9yuQur5P1eM78sHVoMXWnHL3jpmH5URRwwErvOhubJYgpwBlaxo/exec";
+
+        let students = [];
+        let currentUserRole = 'student';
         let currentPage = 1;
         const itemsPerPage = 5;
         let searchQuery = '';
-        
-        // HASH 'santuy' menggunakan fungsi simpleHash
-        const TEACHER_PASS_HASH = "-909641160";
-        
-        // --- KONFIGURASI BACKEND ---
-        // URL Google Script Anda
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBgKCtH5Ntngiig9yuQur5P1eM78sHVoMXWnHL3jpmH5URRwwErvOhubJYgpwBlaxo/exec"; 
+        let isEditing = false;
 
-        // State Data
-        let students = [];
-        let isSyncing = false;
-        let isEditing = false; // Flag untuk mencegah refresh saat mengetik
-
-        // --- SECURITY HELPER ---
         function simpleHash(str) {
             let hash = 0;
             if (str.length === 0) return hash.toString();
@@ -179,50 +154,28 @@
             return hash.toString();
         }
 
-        // --- REALTIME ENGINE ---
-        
-        // 1. Auto Load setiap 5 detik (Polling)
-        // Hanya berjalan jika user TIDAK sedang mengedit input (agar fokus tidak hilang)
-        setInterval(() => {
-            if (!isEditing) {
-                loadData(true); // true = silent mode
-            }
-        }, 5000);
+        // --- REALTIME SYNC (POLLING) ---
+        setInterval(() => { if (!isEditing) loadData(true); }, 5000);
+        function setEditing(status) { isEditing = status; }
 
-        // Fungsi untuk mendeteksi user sedang mengetik
-        function setEditing(status) {
-            isEditing = status;
-        }
-
-        // --- CORE FUNCTIONS ---
-
+        // --- CORE RENDER ---
         function renderApp() {
             const listContainer = document.getElementById('studentList');
-            // Jangan wipe HTML jika sedang editing, update value saja idealnya, 
-            // tapi untuk simplicity kita re-render jika data berubah signifikan.
-            // Di sini kita re-render full list.
-            
             listContainer.innerHTML = '';
             
-            // 1. Filter Data
             const filteredStudents = students.filter(s => 
                 s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 s.project.toLowerCase().includes(searchQuery.toLowerCase())
             );
 
-            // 2. Pagination Logic
             const totalItems = filteredStudents.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             if (currentPage > totalPages) currentPage = totalPages || 1;
 
             const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+            const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
 
-            // 3. Render Cards
-            let countProgress = 0;
-            let countDone = 0;
-            let totalScoreAcc = 0;
+            let countProgress = 0, countDone = 0, totalScoreAcc = 0;
 
             students.forEach(s => {
                 if(s.phase < 5) countProgress++; else countDone++;
@@ -230,12 +183,7 @@
             });
 
             if (paginatedStudents.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="text-center py-10 text-slate-400">
-                        <i class="fa-solid fa-folder-open text-4xl mb-3 opacity-50"></i><br>
-                        Belum ada data siswa.<br>
-                        <span class="text-xs">Data akan muncul otomatis saat Guru menginput...</span>
-                    </div>`;
+                listContainer.innerHTML = `<div class="text-center py-10 text-slate-400">Belum ada data siswa.</div>`;
             } else {
                 paginatedStudents.forEach(student => {
                     const finalScore = calculateFinal(student.scores);
@@ -243,24 +191,34 @@
                     const inputDisabledAttr = isReadOnly ? 'disabled class="w-full px-2 py-1 text-sm border border-slate-200 bg-slate-100 text-slate-500 rounded cursor-not-allowed"' : 'class="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"';
                     
                     const adminActions = isReadOnly ? '' : `
-                        <div class="mt-4 flex justify-between items-center border-t border-slate-100 pt-3">
-                            <button onclick="deleteStudent(${student.id})" class="text-red-500 text-xs hover:underline"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        <div class="mt-4 flex justify-between items-center border-t border-slate-100 pt-3 bg-slate-50 -mx-6 -mb-6 px-6 py-3">
+                            <div class="flex gap-4">
+                                <button onclick="deleteStudent(${student.id})" class="text-red-500 text-xs hover:underline flex items-center gap-1"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                <button onclick="updateLkpdLink(${student.id})" class="text-blue-600 text-xs hover:underline flex items-center gap-1"><i class="fa-solid fa-pen-to-square"></i> Edit Link</button>
+                            </div>
                             <button onclick="advancePhase(${student.id})" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
-                                Lanjut Fase <i class="fa-solid fa-arrow-right"></i>
+                                Lanjut <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
                     `;
 
+                    // Logic Tampilan Link LKPD
+                    const lkpdDisplay = student.lkpdLink 
+                        ? `<a href="${student.lkpdLink}" target="_blank" class="text-blue-600 hover:underline text-xs font-semibold flex items-center gap-1 bg-blue-50 px-2 py-1 rounded border border-blue-100 w-fit mt-1"><i class="fa-solid fa-file-lines"></i> Buka LKPD (Google Sheet)</a>`
+                        : `<span class="text-slate-400 text-xs italic flex items-center gap-1 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Link LKPD belum diinput</span>`;
+
                     const card = document.createElement('div');
                     card.className = "bg-white rounded-xl shadow-md overflow-hidden border border-slate-200 transition hover:shadow-lg";
                     card.innerHTML = `
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
+                        <div class="p-6 pb-2">
+                            <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <h3 class="text-lg font-bold text-slate-800">${student.name}</h3>
-                                    <p class="text-sm text-blue-600 font-medium bg-blue-50 inline-block px-2 py-1 rounded mt-1">
-                                        <i class="fa-solid fa-laptop-code mr-1"></i> ${student.project}
-                                    </p>
+                                    <h3 class="text-lg font-bold text-slate-800 leading-tight">${student.name}</h3>
+                                    <div class="text-sm text-slate-600 font-medium flex items-center gap-2 mt-1">
+                                        <i class="fa-solid fa-laptop-code text-blue-500"></i> ${student.project}
+                                    </div>
+                                    <!-- LKPD LINK SECTION -->
+                                    ${lkpdDisplay}
                                 </div>
                                 <div class="text-right">
                                     <span class="block text-xs text-slate-500 uppercase tracking-wide">Nilai Akhir</span>
@@ -268,74 +226,83 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-4 gap-2 mb-6 text-center text-xs">
-                                ${renderStep(1, "Perencanaan", student.phase)}
-                                ${renderStep(2, "Proses", student.phase)}
-                                ${renderStep(3, "Produk", student.phase)}
-                                ${renderStep(4, "Presentasi", student.phase)}
+                            <div class="grid grid-cols-4 gap-2 mb-4 text-center text-xs mt-4">
+                                ${renderStep(1, "Dokumen", student.phase)}
+                                ${renderStep(2, "Coding", student.phase)}
+                                ${renderStep(3, "Testing", student.phase)}
+                                ${renderStep(4, "Sidang", student.phase)}
                             </div>
 
-                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex justify-between">
-                                    <span>Input Penilaian (0-100)</span>
-                                    ${isReadOnly ? '<span class="text-red-400 text-[10px] italic"><i class="fa-solid fa-lock"></i> Mode Lihat</span>' : ''}
-                                </h4>
+                            <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm mb-4">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b pb-2">Input Penilaian (0-100)</h4>
                                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                    ${renderInput("Persiapan (10%)", "planning", student.id, student.scores.planning, inputDisabledAttr)}
-                                    ${renderInput("Proses (20%)", "process", student.id, student.scores.process, inputDisabledAttr)}
-                                    ${renderInput("Hasil (40%)", "product", student.id, student.scores.product, inputDisabledAttr)}
-                                    ${renderInput("Presentasi (20%)", "present", student.id, student.scores.present, inputDisabledAttr)}
-                                    ${renderInput("Waktu (10%)", "time", student.id, student.scores.time, inputDisabledAttr)}
+                                    ${renderInput("Persiapan (10%)", "persiapan", student.id, student.scores.persiapan, inputDisabledAttr)}
+                                    ${renderInput("Perencanaan (15%)", "perencanaan", student.id, student.scores.perencanaan, inputDisabledAttr)}
+                                    ${renderInput("Hasil (40%)", "hasil", student.id, student.scores.hasil, inputDisabledAttr)}
+                                    ${renderInput("Presentasi (25%)", "presentasi", student.id, student.scores.presentasi, inputDisabledAttr)}
+                                    ${renderInput("Waktu (10%)", "waktu", student.id, student.scores.waktu, inputDisabledAttr)}
                                 </div>
                             </div>
-                            
-                            ${adminActions}
                         </div>
+                        
+                        ${adminActions}
                     `;
                     listContainer.appendChild(card);
                 });
             }
 
-            // Update Stats
             document.getElementById('totalStudents').innerText = students.length;
             document.getElementById('inProgress').innerText = countProgress;
             document.getElementById('completed').innerText = countDone;
             document.getElementById('avgScore').innerText = students.length ? Math.round(totalScoreAcc / students.length) : 0;
-            document.getElementById('showingCount').innerText = `${paginatedStudents.length} dari ${totalItems}`;
-
-            // Update Controls
-            document.getElementById('paginationControls').classList.toggle('hidden', totalPages <= 1);
-            document.getElementById('btnPrev').disabled = currentPage === 1;
-            document.getElementById('btnNext').disabled = currentPage === totalPages || totalPages === 0;
-            document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages || 1}`;
-
+            document.getElementById('showingCount').innerText = `${paginatedStudents.length} dari ${students.length}`;
+            
+            // Pagination UI
+            const pageControls = document.getElementById('paginationControls');
+            if(totalPages > 1) {
+                pageControls.classList.remove('hidden');
+                document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
+            } else {
+                pageControls.classList.add('hidden');
+            }
+            
             updateAuthUI();
         }
 
         function renderInput(label, key, id, value, attr) {
-            // Tambahkan onfocus dan onblur untuk menghandle auto-refresh blocking
             return `
                 <div>
-                    <label class="block text-[10px] text-slate-500 mb-1">${label}</label>
+                    <label class="block text-[10px] text-slate-500 mb-1 truncate" title="${label}">${label}</label>
                     <input type="number" min="0" max="100" 
                         onfocus="setEditing(true)"
                         onblur="setEditing(false)"
                         onchange="updateScore(${id}, '${key}', this.value)" 
-                        value="${value}" 
+                        value="${value || 0}" 
                         ${attr}>
                 </div>
             `;
         }
 
-        // ... [Helper functions remain same: calculateFinal, getScoreColor, renderStep, etc] ...
-        
         function calculateFinal(s) {
-            const total = (s.planning * WEIGHTS.planning) + 
-                          (s.process * WEIGHTS.process) + 
-                          (s.product * WEIGHTS.product) + 
-                          (s.present * WEIGHTS.present) + 
-                          (s.time * WEIGHTS.time);
+            const total = (s.persiapan * WEIGHTS.persiapan) + 
+                          (s.perencanaan * WEIGHTS.perencanaan) + 
+                          (s.hasil * WEIGHTS.hasil) + 
+                          (s.presentasi * WEIGHTS.presentasi) + 
+                          (s.waktu * WEIGHTS.waktu);
             return Math.round(total);
+        }
+
+        function renderStep(stepNum, label, currentPhase) {
+            let colorClass = "border-slate-200 text-slate-400";
+            let icon = `<i class="fa-solid fa-circle text-[8px]"></i>`;
+            if (currentPhase > stepNum) {
+                colorClass = "border-green-500 bg-green-50 text-green-700 font-bold phase-done";
+                icon = `<i class="fa-solid fa-check"></i>`;
+            } else if (currentPhase === stepNum) {
+                colorClass = "border-blue-500 bg-blue-50 text-blue-700 font-bold ring-2 ring-blue-200";
+                icon = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+            }
+            return `<div class="border rounded py-1 px-1 flex flex-col items-center justify-center gap-1 ${colorClass}"><span class="text-[10px]">${icon} ${label}</span></div>`;
         }
 
         function getScoreColor(score) {
@@ -345,46 +312,21 @@
             return 'text-red-600';
         }
 
-        function renderStep(stepNum, label, currentPhase) {
-            let colorClass = "border-slate-200 text-slate-400";
-            let icon = `<i class="fa-solid fa-circle text-[8px]"></i>`;
-            
-            if (currentPhase > stepNum) {
-                colorClass = "border-green-500 bg-green-50 text-green-700 font-bold phase-done";
-                icon = `<i class="fa-solid fa-check"></i>`;
-            } else if (currentPhase === stepNum) {
-                colorClass = "border-blue-500 bg-blue-50 text-blue-700 font-bold ring-2 ring-blue-200";
-                icon = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-            }
-
-            return `
-                <div class="border rounded py-2 px-1 flex flex-col items-center justify-center gap-1 ${colorClass}">
-                    <span class="text-xs">${icon} ${label}</span>
-                </div>
-            `;
-        }
-
-        // --- ACTIONS & AUTO SYNC ---
-
+        // --- DATA OPS ---
         function addStudent(e) {
             e.preventDefault();
-            const name = document.getElementById('inputName').value;
-            const project = document.getElementById('inputProject').value;
-            
             students.push({
                 id: Date.now(),
-                name: name,
-                project: project,
+                name: document.getElementById('inputName').value,
+                project: document.getElementById('inputProject').value,
                 phase: 1,
-                scores: { planning: 0, process: 0, product: 0, present: 0, time: 0 }
+                scores: { persiapan: 0, perencanaan: 0, hasil: 0, presentasi: 0, waktu: 0 },
+                lkpdLink: "" // Init Link LKPD Kosong
             });
-            
             document.getElementById('modalAdd').classList.add('hidden');
             e.target.reset();
-            handleSearch('');
-            
-            // AUTO SYNC
-            syncData(true); 
+            renderApp();
+            syncData(true);
         }
 
         function updateScore(id, key, val) {
@@ -393,12 +335,21 @@
             if(student) {
                 student.scores[key] = parseFloat(val);
                 renderApp();
-                
-                // AUTO SYNC (Silent)
-                // Kita gunakan debounce logic simple atau langsung kirim
-                // Karena Apps Script lambat, idealnya kita tidak spam request. 
-                // Tapi untuk kebutuhan demo, kita kirim langsung.
                 syncData(true);
+            }
+        }
+        
+        // --- NEW FUNCTION: UPDATE LKPD LINK ---
+        function updateLkpdLink(id) {
+            if (currentUserRole !== 'teacher') return;
+            const student = students.find(s => s.id === id);
+            if(student) {
+                const newLink = prompt("Masukkan Link Google Sheet/PDF LKPD Siswa:", student.lkpdLink || "");
+                if(newLink !== null) { // Jika tidak dicancel
+                    student.lkpdLink = newLink;
+                    renderApp();
+                    syncData(true); // Simpan ke server
+                }
             }
         }
 
@@ -407,7 +358,6 @@
             if(student && student.phase < 5) {
                 student.phase++;
                 renderApp();
-                // AUTO SYNC
                 syncData(true);
             }
         }
@@ -416,145 +366,90 @@
             if(confirm("Hapus data siswa ini?")) {
                 students = students.filter(s => s.id !== id);
                 renderApp();
-                // AUTO SYNC
                 syncData(true);
             }
         }
-        
-        // --- DATA SYNCING ---
 
+        // --- BACKEND ---
         async function syncData(silent = false) {
-            if (!GOOGLE_SCRIPT_URL) {
-                if(!silent) alert("URL Apps Script belum diisi!");
-                return;
-            }
-
             const statusEl = document.getElementById('syncStatus');
             statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...`;
-            
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(students)
                 });
-                
                 statusEl.innerHTML = `<i class="fa-solid fa-check"></i> Saved`;
                 setTimeout(() => statusEl.innerHTML = "", 3000);
-                
-                if(!silent) alert("Data Tersimpan!");
-            } catch (error) {
-                console.error("Error:", error);
-                statusEl.innerHTML = `<span class="text-red-300">Error!</span>`;
-                if(!silent) alert("Gagal menyimpan data.");
-            }
+            } catch (error) { statusEl.innerHTML = "Error!"; }
         }
 
         async function loadData(silent = false) {
-            if (!GOOGLE_SCRIPT_URL) return;
-
-            const statusEl = document.getElementById('syncStatus');
-            // Jika silent mode (auto refresh), jangan ubah UI tombol
-            if(!silent) {
-                // Manual click logic
-            } else {
-                // Background refresh indicator (optional, maybe console log)
-            }
-
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
                 const data = await response.json();
-
                 if (Array.isArray(data)) {
-                    // Cek apakah data berubah sebelum render ulang untuk efisiensi
-                    // (Simplifikasi: kita replace saja untuk menjamin konsistensi)
-                    
+                    // Mapping Baru: Include LKPD Link (Index 10)
                     students = data.map(row => ({
                         id: row[0],
                         name: row[1],
                         project: row[2],
-                        phase: parseInt(row[3]),
+                        phase: parseInt(row[3] || 1),
                         scores: {
-                            planning: parseFloat(row[4] || 0),
-                            process: parseFloat(row[5] || 0),
-                            product: parseFloat(row[6] || 0),
-                            present: parseFloat(row[7] || 0),
-                            time: parseFloat(row[8] || 0)
-                        }
+                            persiapan: parseFloat(row[4] || 0),
+                            perencanaan: parseFloat(row[5] || 0),
+                            hasil: parseFloat(row[6] || 0),
+                            presentasi: parseFloat(row[7] || 0),
+                            waktu: parseFloat(row[8] || 0)
+                        },
+                        // Ambil kolom ke-11 (index 10) dari sheet
+                        lkpdLink: row[10] || "" 
                     }));
-                    
                     renderApp();
-                    if(!silent) alert("Data berhasil diambil!");
+                    if(!silent) alert("Data Refreshed!");
                 }
-            } catch (error) {
-                if(!silent) console.error("Error loading data:", error);
-            }
+            } catch (error) { if(!silent) console.error("Load Error"); }
         }
 
-        // --- AUTH & UI ---
-        
+        // --- AUTH ---
         function toggleRole() {
             if (currentUserRole === 'student') {
-                const pass = prompt("Masukkan Password Guru:");
-                if (pass !== null) {
-                    const inputHash = simpleHash(pass.trim());
-                    if (inputHash === TEACHER_PASS_HASH) {
-                        currentUserRole = 'teacher';
-                        alert("Login Berhasil! Mode Edit Aktif.");
-                        renderApp();
-                    } else {
-                        alert("Password salah!");
-                    }
-                }
-            } else {
-                if(confirm("Keluar dari mode Guru?")) {
-                    currentUserRole = 'student';
+                const pass = prompt("Password Guru:");
+                if (pass && simpleHash(pass.trim()) === TEACHER_PASS_HASH) {
+                    currentUserRole = 'teacher';
                     renderApp();
-                }
+                    alert("Mode Guru Aktif");
+                } else if(pass) alert("Salah");
+            } else {
+                if(confirm("Logout Guru?")) { currentUserRole = 'student'; renderApp(); }
             }
         }
 
         function updateAuthUI() {
-            const adminToolbar = document.getElementById('adminToolbar');
-            const authBtn = document.getElementById('authBtn');
-            const modeIndicator = document.getElementById('modeIndicator');
-
+            const tb = document.getElementById('adminToolbar');
+            const ab = document.getElementById('authBtn');
+            const mi = document.getElementById('modeIndicator');
             if (currentUserRole === 'teacher') {
-                adminToolbar.classList.remove('hidden');
-                authBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Logout Guru`;
-                authBtn.classList.remove('bg-slate-700');
-                authBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'border-red-600');
-                
-                modeIndicator.classList.remove('bg-yellow-100', 'border-yellow-500', 'text-yellow-700');
-                modeIndicator.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
-                modeIndicator.innerHTML = `<span><i class="fa-solid fa-user-tie mr-2"></i> Mode Guru (Edit Aktif)</span>`;
+                tb.classList.remove('hidden');
+                ab.innerHTML = `Logout`;
+                ab.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm";
+                mi.className = "mb-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 rounded text-sm flex justify-between";
+                mi.innerHTML = `<span><i class="fa-solid fa-user-tie mr-2"></i> Mode Guru (Edit Aktif)</span>`;
             } else {
-                adminToolbar.classList.add('hidden');
-                authBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Login Guru`;
-                authBtn.classList.add('bg-slate-700');
-                authBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'border-red-600');
-
-                modeIndicator.classList.add('bg-yellow-100', 'border-yellow-500', 'text-yellow-700');
-                modeIndicator.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700');
-                modeIndicator.innerHTML = `<span><i class="fa-solid fa-eye mr-2"></i> Mode Siswa (Hanya Lihat)</span>`;
+                tb.classList.add('hidden');
+                ab.innerHTML = `Login Guru`;
+                ab.className = "bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm";
+                mi.className = "mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded text-sm flex justify-between";
+                mi.innerHTML = `<span><i class="fa-solid fa-eye mr-2"></i> Mode Siswa (Hanya Lihat)</span>`;
             }
+            // Handling Input search & pagination UI events
+            document.getElementById('handleSearch')?.addEventListener('keyup', (e) => handleSearch(e.target.value));
         }
 
-        function handleSearch(val) {
-            searchQuery = val;
-            currentPage = 1;
-            renderApp();
-        }
+        function handleSearch(val) { searchQuery = val; currentPage = 1; renderApp(); }
+        function changePage(d) { currentPage += d; renderApp(); }
 
-        function changePage(delta) {
-            currentPage += delta;
-            renderApp();
-        }
-
-        // Init: Load data pertama kali
         loadData(true);
-
     </script>
 </body>
 </html>
